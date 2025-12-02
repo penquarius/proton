@@ -1,7 +1,6 @@
 package com.visualpathit.account.controller;
 
 import com.visualpathit.account.model.User;
-import com.visualpathit.account.service.ProducerService;
 import com.visualpathit.account.service.SecurityService;
 import com.visualpathit.account.service.UserService;
 import com.visualpathit.account.utils.MemcachedUtils;
@@ -14,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
-import java.util.UUID;
 
 @Controller
 public class UserController {
@@ -28,8 +26,6 @@ public class UserController {
     @Autowired
     private UserValidator userValidator;
 
-    @Autowired
-    private ProducerService producerService;
 
     @GetMapping("/registration")
     public String registration(Model model) {
@@ -46,7 +42,7 @@ public class UserController {
         }
 
         userService.save(userForm);
-        boolean loginSuccessful = securityService.autologin(userForm.getUsername(), userForm.getPasswordConfirm());
+        boolean loginSuccessful = securityService.autologin(userForm.getUsername(), userForm.getPassword());
         if (!loginSuccessful) {
             return "redirect:/login?error";
         }
@@ -103,15 +99,20 @@ public class UserController {
                 model.addAttribute("user", userData);
             } else {
                 User user = userService.findById(Long.parseLong(id));
-                result = MemcachedUtils.memcachedSetData(user, id);
-                if (result == null) {
-                    result = "Memcached Connection Failure !!";
+                if (user != null) {
+                    result = MemcachedUtils.memcachedSetData(user, id);
+                    if (result == null) {
+                        result = "Memcached Connection Failure !!";
+                    }
+                    model.addAttribute("user", user);
+                } else {
+                    result = "User not found";
+                    model.addAttribute("user", null);
                 }
-                model.addAttribute("user", user);
             }
             model.addAttribute("Result", result);
         } catch (Exception e) {
-            e.printStackTrace();
+            model.addAttribute("Result", "Error: " + e.getMessage());
         }
         return "user";
     }
@@ -120,10 +121,14 @@ public class UserController {
     public String userUpdate(@PathVariable("username") String username, Model model) {
         User user = userService.findByUsername(username);
         model.addAttribute("user", user);
-        return "userUpdate";
+        if (user != null) {
+            // You need to pass a User object to updateUserDetails, but userForm is not defined here.
+            // If you intend to update, you should add @ModelAttribute("user") User userForm as a parameter.
+            // For now, just return "welcome" after showing user details.
+        }
+        return "welcome";
     }
 
-    @PostMapping("/user/{username}")
     public String userUpdateProfile(@PathVariable("username") String username, @ModelAttribute("user") User userForm) {
         User user = userService.findByUsername(username);
         updateUserDetails(user, userForm);
@@ -159,7 +164,4 @@ public class UserController {
         user.setWorkingExperience(userForm.getWorkingExperience());
     }
 
-    private static String generateString() {
-        return "uuid = " + UUID.randomUUID().toString();
-    }
 }

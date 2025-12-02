@@ -2,7 +2,6 @@ package com.visualpathit.account.utils;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.util.concurrent.Future;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -27,10 +26,10 @@ public class MemcachedUtils {
     			System.out.println("--------------------------------------------");
     			System.out.println("Client is ::"+ mactiveClient.getStats());
     			System.out.println("--------------------------------------------");
-	            Future future = mactiveClient.set(key,expireTime, user);	        	         
-	     	    System.out.println("set status:" + future.get());
-	     	    Result =" Data is From DB and Data Inserted In Cache !!";
-	     	    mactiveClient.shutdown();             
+				net.spy.memcached.internal.OperationFuture<Boolean> future = mactiveClient.set(key,expireTime, user);	        	         
+				System.out.println("set status:" + future.get());
+				Result =" Data is From DB and Data Inserted In Cache !!";
+				mactiveClient.shutdown();             
 	           
     		
     	} catch (Exception e) {    		
